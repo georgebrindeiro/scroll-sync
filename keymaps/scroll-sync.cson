@@ -1,0 +1,2 @@
+'.workspace .editor :not(.mini)':
+  'ctrl-alt-s': 'scroll-sync:toggle'
