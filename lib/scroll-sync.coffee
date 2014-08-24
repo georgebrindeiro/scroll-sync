@@ -15,14 +15,14 @@ class ScrlSync
   Subscriber.includeInto @
   
   activate: (state) ->
-    dbg 'activate 4'
+    # dbg 'activate'
     @statusBarView = null
     atom.workspaceView.command "scroll-sync:toggle", => 
       if not @statusBarView then @startTracking()
       else                       @stopTracking()
 
   startTracking: -> 
-    dbg 'startTracking', @statusBarView?
+    # dbg 'startTracking', @statusBarView?
     paneView   = atom.workspaceView.getActivePaneView()
     editorView = atom.workspaceView.getActiveView()
     if not paneView or not editorView then stopTracking(); return
@@ -72,22 +72,22 @@ class ScrlSync
     map1by0 = []
     for diff in diffs
       [diffType, diffStr] = diff
-      lineCount = diffStr.match(/\n/g).length
+      lineCount = diffStr.match(/\n/g)?.length ? 0
       for i in [0...lineCount]
         m0by1Len = map0by1.length
         m1by0Len = map1by0.length
         if diffType in [DIFF_EQUAL, DIFF_INSERT] then map1by0.push m0by1Len
         if diffType in [DIFF_EQUAL, DIFF_DELETE] then map0by1.push m1by0Len
-    paneInfo[0].mapToOther = map1by0
-    paneInfo[1].mapToOther = map0by1
+    paneInfo[0].mapToOther = map0by1
+    paneInfo[1].mapToOther = map1by0
     
-    dbg 'textChanged', paneInfo
+    # dbg 'textChanged', paneInfo
 
   scrollPosChanged: (pane) -> 
-      dbg 'scrollPosChanged', pane
+      # dbg 'scrollPosChanged', pane
       thisInfo  = paneInfo[pane]
       otherInfo = paneInfo[1-pane]
-      if not thisInfo or not otherInfo then return
+      if not thisInfo or not otherInfo or thisInfo.scrolling then return
       
       thisEditor     = thisInfo.editor
       thisEditorView = thisInfo.editorView
@@ -97,27 +97,35 @@ class ScrlSync
       thisBot = thisInfo.lineBot = \
          thisEditor.bufferPositionForScreenPosition( \
         [thisEditorView.getLastVisibleScreenRow(),  0] ).row
-        
-      otherEditor     = otherInfo.editor
-      othereditorView = otherInfo.editorView
-      otherTop        = otherInfo.lineTop
-      otherBot        = otherInfo.lineBot
+      thisMid = Math.min thisInfo.mapToOther.length-1, Math.floor (thisTop + thisBot) / 2
       
-      thisMid         = Math.floor (thisTop + thisBot) / 2
-      otherPos        = [thisInfo.mapToOther[thisMid], 0]
+      othereditorView = otherInfo.editorView
 
-      dbg 'scrollPosChanged', {pane, thisMid, otherMid: otherPos[0], thisInfo, otherInfo}       
-      othereditorView.scrollToBufferPosition otherPos, center: yes
+      otherTopScrnPixPos = othereditorView.pixelPositionForScreenPosition \
+                          [othereditorView.getFirstVisibleScreenRow(), 0]
+      otherBotScrnPixPos = othereditorView.pixelPositionForScreenPosition \
+                          [othereditorView.getLastVisibleScreenRow(), 0]
+      otherHalfScrnHgtPix = Math.floor (otherBotScrnPixPos.top - otherTopScrnPixPos.top) / 2
+      # dbg 'otherHalfScrnHgtPix', otherHalfScrnHgtPix
+      
+      otherMid = Math.min otherInfo.mapToOther.length-1, thisInfo.mapToOther[thisMid] 
+      otherPos    = [otherMid, 0]
+      otherPixPos = othereditorView.pixelPositionForBufferPosition otherPos
+      
+      # dbg 'scrollTop', otherPos[0]    
+      otherInfo.scrolling = yes
+      othereditorView.scrollTop otherPixPos.top - otherHalfScrnHgtPix
+      otherInfo.scrolling = no
 
   stopTracking: ->
-    dbg 'stopTracking', @statusBarView?
+    # dbg 'stopTracking', @statusBarView?
     @unsubscribe()
     paneInfo = [null, null]
     @statusBarView?.destroy()
     @statusBarView = null
   
   deactivate: -> 
-    dbg 'deactivate', @statusBarView?
+    # dbg 'deactivate', @statusBarView?
     @stopTracking
 
 module.exports = new ScrlSync
