@@ -11,8 +11,6 @@
   },
   "dependencies": {
     "diff_match_patch":  "0.1.x",
-    "underscore-plus":   ">=1.5.1",
-    "underscore.string": ">=2.3.0",
     "emissary":          "1.x"
   }
 }

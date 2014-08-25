@@ -1,6 +1,5 @@
 {Subscriber} = require 'emissary'
 
-dbg  = require('./utils').debug 'ssync'
 StatusBarView = require './status-bar-view'
 dmpmod        = require 'diff_match_patch'
 dmp           = new dmpmod.diff_match_patch()
@@ -15,20 +14,19 @@ class ScrlSync
   Subscriber.includeInto @
   
   activate: (state) ->
-    # dbg 'activate'
     @statusBarView = null
     atom.workspaceView.command "scroll-sync:toggle", => 
       if not @statusBarView then @startTracking()
       else                       @stopTracking()
 
   startTracking: -> 
-    # dbg 'startTracking', @statusBarView?
     paneView   = atom.workspaceView.getActivePaneView()
     editorView = atom.workspaceView.getActiveView()
     if not paneView or not editorView then stopTracking(); return
     
     editor = editorView.getEditor()
     buffer = editor.getBuffer()
+    @subscribe buffer, "destroyed", => @stopTracking?()
     paneInfo[0] = {
       buffer, editor, editorView, paneView
       lineTop:
@@ -48,6 +46,7 @@ class ScrlSync
     editorView = $editorView.view()
     editor = editorView.getEditor()
     buffer = editor.getBuffer()
+    @subscribe buffer, "destroyed", => @stopTracking?()
     paneInfo[1] = {
       buffer, editor, editorView
       lineTop:
@@ -81,10 +80,7 @@ class ScrlSync
     paneInfo[0].mapToOther = map0by1
     paneInfo[1].mapToOther = map1by0
     
-    # dbg 'textChanged', paneInfo
-
   scrollPosChanged: (pane) -> 
-      # dbg 'scrollPosChanged', pane
       thisInfo  = paneInfo[pane]
       otherInfo = paneInfo[1-pane]
       if not thisInfo or not otherInfo or thisInfo.scrolling then return
@@ -106,26 +102,22 @@ class ScrlSync
       otherBotScrnPixPos = othereditorView.pixelPositionForScreenPosition \
                           [othereditorView.getLastVisibleScreenRow(), 0]
       otherHalfScrnHgtPix = Math.floor (otherBotScrnPixPos.top - otherTopScrnPixPos.top) / 2
-      # dbg 'otherHalfScrnHgtPix', otherHalfScrnHgtPix
       
       otherMid = Math.min otherInfo.mapToOther.length-1, thisInfo.mapToOther[thisMid] 
       otherPos    = [otherMid, 0]
       otherPixPos = othereditorView.pixelPositionForBufferPosition otherPos
       
-      # dbg 'scrollTop', otherPos[0]    
       otherInfo.scrolling = yes
       othereditorView.scrollTop otherPixPos.top - otherHalfScrnHgtPix
       otherInfo.scrolling = no
 
   stopTracking: ->
-    # dbg 'stopTracking', @statusBarView?
     @unsubscribe()
     paneInfo = [null, null]
     @statusBarView?.destroy()
     @statusBarView = null
   
   deactivate: -> 
-    # dbg 'deactivate', @statusBarView?
     @stopTracking
 
 module.exports = new ScrlSync

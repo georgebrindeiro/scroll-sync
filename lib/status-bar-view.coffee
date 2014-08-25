@@ -1,12 +1,13 @@
 {View} = require 'atom'
-dbg    = require('./utils').debug 'sbvw'
 
 module.exports =
 class StatusBarView extends View 
   @content: ->
     @a class: 'inline-block text-highlight', href:'#', 'ScrlSync'
  
-  initialize: ->   
+  initialize: (main) ->   
+    @click => main.stopTracking()
+    
     do waitForStatusBar = =>
       if not (sb = atom.workspaceView.statusBar) 
         setTimeout waitForStatusBar, 100
