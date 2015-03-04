@@ -1,7 +1,7 @@
 {
   "name": "scroll-sync",
   "main": "./lib/scroll-sync",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Synchronize scrolling of two editor panes by content.",
   "activationEvents": ["scroll-sync:toggle"],
   "repository": "https://github.com/mark-hahn/scroll-sync",
