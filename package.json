@@ -1,16 +1,19 @@
 {
   "name": "scroll-sync",
   "main": "./lib/scroll-sync",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Synchronize scrolling of two editor panes by content.",
-  "activationEvents": ["scroll-sync:toggle"],
+  "activationEvents": [
+    "scroll-sync:toggle"
+  ],
   "repository": "https://github.com/mark-hahn/scroll-sync",
   "license": "MIT",
   "engines": {
     "atom": ">0.100.0"
   },
   "dependencies": {
-    "diff_match_patch":  "0.1.x",
-    "emissary":          "1.x"
+    "atom-space-pen-views": "^2.0.5",
+    "diff_match_patch": "0.1.x",
+    "sub-atom": "^1.0.0"
   }
 }

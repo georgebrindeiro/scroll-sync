@@ -1,5 +1,4 @@
-{Subscriber} = require 'emissary'
-
+SubAtom       = require 'sub-atom'
 StatusBarView = require './status-bar-view'
 dmpmod        = require 'diff_match_patch'
 dmp           = new dmpmod.diff_match_patch()
@@ -11,48 +10,48 @@ DIFF_DELETE = -1
 paneInfo = [null, null]
 
 class ScrlSync
-  Subscriber.includeInto @
-  
   activate: (state) ->
+    console.log 'activate scrlsync'
+    @subs = new SubAtom
     @statusBarView = null
-    atom.workspaceView.command "scroll-sync:toggle", => 
+    @subs.add atom.commands.add 'atom-workspace', 'scroll-sync:toggle': =>
       if not @statusBarView then @startTracking()
       else                       @stopTracking()
 
   startTracking: -> 
-    paneView   = atom.workspaceView.getActivePaneView()
-    editorView = atom.workspaceView.getActiveView()
-    if not paneView or not editorView then stopTracking(); return
     
-    editor = editorView.getEditor()
+    pane   = atom.workspace.getActivePane()
+    editor = atom.workspace.getActiveTextEditor()
+    if not pane or not editor then stopTracking(); return
+    
     buffer = editor.getBuffer()
-    @subscribe buffer, "destroyed", => @stopTracking?()
+    @subs.add buffer, "destroyed", => @stopTracking?()
     paneInfo[0] = {
-      buffer, editor, editorView, paneView
+      buffer, editor, editor, pane
       lineTop:
-        editor.bufferPositionForScreenPosition( [editorView.getFirstVisibleScreenRow(), 0] ).row
+        editor.bufferPositionForScreenPosition( [editor.getFirstVisibleScreenRow(), 0] ).row
       lineBot:
-        editor.bufferPositionForScreenPosition( [editorView.getLastVisibleScreenRow(),  0] ).row
+        editor.bufferPositionForScreenPosition( [editor.getLastVisibleScreenRow(),  0] ).row
     }
-    paneView = null
-    paneViews = atom.workspaceView.getPaneViews()
-    for pv in paneViews
-      if pv isnt paneInfo[0].paneView
-        paneView = pv
+    pane = null
+    panes = atom.workspace.getPanes()
+    for pv in panes
+      if pv isnt paneInfo[0].pane
+        pane = pv
         break
-    if not paneView then @stopTracking(); return
-    $editorView = paneView.find '.editor:visible'
-    if $editorView.length is 0 then stopTracking(); return
-    editorView = $editorView.view()
-    editor = editorView.getEditor()
+    if not pane then @stopTracking(); return
+    
+    editor = pane.getActiveEditor()
+    if not editor then stopTracking(); return
+    
     buffer = editor.getBuffer()
-    @subscribe buffer, "destroyed", => @stopTracking?()
+    @subs.add buffer, "destroyed", => @stopTracking?()
     paneInfo[1] = {
-      buffer, editor, editorView
+      buffer, editor, editor
       lineTop:
-        editor.bufferPositionForScreenPosition( [editorView.getFirstVisibleScreenRow(), 0] ).row
+        editor.bufferPositionForScreenPosition( [editor.getFirstVisibleScreenRow(), 0] ).row
       lineBot:
-        editor.bufferPositionForScreenPosition( [editorView.getLastVisibleScreenRow(),  0] ).row
+        editor.bufferPositionForScreenPosition( [editor.getLastVisibleScreenRow(),  0] ).row
     }
     
     @textChanged()
@@ -61,8 +60,8 @@ class ScrlSync
     @statusBarView = new StatusBarView @
   
     for pane in [0..1] then do (pane) =>
-      @subscribe paneInfo[pane].buffer, 'contents-modified',     @textChanged
-      @subscribe paneInfo[pane].editor, 'scroll-top-changed', => @scrollPosChanged pane
+      @subs.add paneInfo[pane].buffer, 'contents-modified',   @textChanged
+      @subs.add paneInfo[pane].editor.onDidChangeScrollTop => @scrollPosChanged pane
 
   textChanged: ->
     diffs = dmp.diff_main paneInfo[0].buffer.getText(), paneInfo[1].buffer.getText()
@@ -85,39 +84,39 @@ class ScrlSync
       otherInfo = paneInfo[1-pane]
       if not thisInfo or not otherInfo or thisInfo.scrolling then return
       
-      thisEditor     = thisInfo.editor
-      thisEditorView = thisInfo.editorView
+      thisEditor = thisInfo.editor
       thisTop = thisInfo.lineTop = \
          thisEditor.bufferPositionForScreenPosition( \
-        [thisEditorView.getFirstVisibleScreenRow(), 0] ).row
+        [thisEditor.getFirstVisibleScreenRow, 0] ).row
       thisBot = thisInfo.lineBot = \
          thisEditor.bufferPositionForScreenPosition( \
-        [thisEditorView.getLastVisibleScreenRow(),  0] ).row
+        [thisEditor.getLastVisibleScreenRow(),  0] ).row
       thisMid = Math.min thisInfo.mapToOther.length-1, Math.floor (thisTop + thisBot) / 2
       
-      othereditorView = otherInfo.editorView
+      othereditor = otherInfo.editor
+      otherEditor     = othereditor.getModel()
 
-      otherTopScrnPixPos = othereditorView.pixelPositionForScreenPosition \
-                          [othereditorView.getFirstVisibleScreenRow(), 0]
-      otherBotScrnPixPos = othereditorView.pixelPositionForScreenPosition \
-                          [othereditorView.getLastVisibleScreenRow(), 0]
+      otherTopScrnPixPos = otherEditor.pixelPositionForScreenPosition \
+                          [otherEditor.getFirstVisibleScreenRow(), 0]
+      otherBotScrnPixPos = otherEditor.pixelPositionForScreenPosition \
+                          [otherEditor.getLastVisibleScreenRow(), 0]
       otherHalfScrnHgtPix = Math.floor (otherBotScrnPixPos.top - otherTopScrnPixPos.top) / 2
       
       otherMid = Math.min otherInfo.mapToOther.length-1, thisInfo.mapToOther[thisMid] 
       otherPos    = [otherMid, 0]
-      otherPixPos = othereditorView.pixelPositionForBufferPosition otherPos
+      otherPixPos = othereditor.pixelPositionForBufferPosition otherPos
       
       otherInfo.scrolling = yes
-      othereditorView.scrollTop otherPixPos.top - otherHalfScrnHgtPix
+      othereditor.scrollTop otherPixPos.top - otherHalfScrnHgtPix
       otherInfo.scrolling = no
 
   stopTracking: ->
-    @unsubscribe()
     paneInfo = [null, null]
     @statusBarView?.destroy()
     @statusBarView = null
   
   deactivate: -> 
+    @subs.dispose()
     @stopTracking
 
 module.exports = new ScrlSync

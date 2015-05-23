@@ -1,3 +1,8 @@
+### 0.1.2 - 4/23/15
+
+- fixed many deprecations
+- switched from emmisary to sub-atom
+
 ### 0.1.1 - 3/3/15
 
 - fixed keymap deprecation
