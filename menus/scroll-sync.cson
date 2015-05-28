@@ -1,7 +1,8 @@
 # See https://atom.io/docs/latest/creating-a-package#menus for more details
 'context-menu':
-  '.overlayer':
-      'Scroll Sync Toggle': 'scroll-sync:toggle'
+  '.overlayer': [
+    { 'label': 'Scroll Sync Toggle', 'command': 'scroll-sync:toggle' }
+  ]
 
 'menu': [
   {
