@@ -1,16 +1,14 @@
-# See https://atom.io/docs/latest/creating-a-package#menus for more details
-'context-menu':
-  '.overlayer':
-      'Scroll Sync Toggle': 'scroll-sync:toggle'
 
-'menu': [
-  {
-    'label': 'Packages'
-    'submenu': [
-      'label': 'Scroll Sync'
-      'submenu': [
-        { 'label': 'Toggle', 'command': 'scroll-sync:toggle' }
-      ]
-    ]
-  }
+menu: [
+  label: 'Packages'
+  submenu: [
+     label: 'Toggle Scroll Sync'
+     command: 'scroll-sync:toggle' 
+  ]
 ]
+
+'context-menu':
+  'atom-workspace': [
+     label: 'Toggle Scroll Sync'
+     command: 'scroll-sync:toggle'
+  ]

@@ -1,3 +1,7 @@
+### 0.1.4 - 6/4/15
+- fixed cson format for menu
+- removed context menu item
+
 ### 0.1.3 - 5/24/15
 - fixed more deprecations
 - new status bar api
