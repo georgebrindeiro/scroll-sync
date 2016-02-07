@@ -14,24 +14,24 @@ class ScrlSync
     console.log 'activate scrlsync'
     @subs = new SubAtom
     @tracking = no
+    @statusBarEle = document.createElement 'a'
     @subToggle = new SubAtom
     @subToggle.add atom.commands.add 'atom-workspace', 'scroll-sync:toggle': =>
       if not @tracking then @startTracking() else @stopTracking()
 
   consumeStatusBar: (statusBar) ->
     console.log 'consumeStatusBar'
-    statusBarEle = document.createElement 'a'
-    statusBarEle.classList.add 'inline-block'
-    statusBarEle.classList.add 'text-highlight'
-    statusBarEle.setAttribute 'href', '#'
-    statusBarEle.textContent = 'ScrlSync'
-    statusBarEle.style.display = 'none'
-    statusBarEle.addEventListener 'click', => @stopTracking()
-    @statusBarTile = statusBar.addLeftTile item: statusBarEle, priority: 100
+    @statusBarEle.classList.add 'inline-block'
+    @statusBarEle.classList.add 'text-highlight'
+    @statusBarEle.setAttribute 'href', '#'
+    @statusBarEle.textContent = 'ScrlSync'
+    @statusBarEle.style.display = if @tracking then 'inline-block' else 'none'
+    @statusBarEle.addEventListener 'click', => @stopTracking()
+    @statusBarTile = statusBar.addLeftTile item: @statusBarEle, priority: 100
 
   startTracking: -> 
     @tracking = yes
-    @statusBarTile.item.style.display = 'inline-block'
+    @statusBarEle.style.display = 'inline-block'
     pane   = atom.workspace.getActivePane()
     editor = atom.workspace.getActiveTextEditor()
     editorEle = atom.views.getView editor
@@ -120,7 +120,7 @@ class ScrlSync
     @tracking = no
     @subs.dispose()
     @subs.clear()
-    @statusBarTile.item.style.display = 'none'
+    @statusBarEle.style.display = 'none'
     paneInfo = [null, null]
   
   deactivate: -> 
