@@ -49,7 +49,6 @@ class ScrlSync
     pane = null
     panes = atom.workspace.getPanes()
     for pv in panes
-      if pv isnt paneInfo[0].pane
         pane = pv
         break
     if not pane then @stopTracking(); return

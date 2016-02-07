@@ -1,3 +1,8 @@
+### 0.1.5 - 2/7/16
+  PR #14 by lazlojuly (thanks)
+- creating referenceable statusbar element in activate method
+- show/hide referenceable element instead of going via Tile object
+
 ### 0.1.4 - 6/4/15
 - fixed cson format for menu
 - removed context menu item
