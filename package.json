@@ -1,7 +1,7 @@
 {
   "name": "scroll-sync",
   "main": "./lib/scroll-sync",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Synchronize scrolling of two editor panes by content.",
   "consumedServices": {
     "status-bar": {
