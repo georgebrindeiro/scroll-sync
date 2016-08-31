@@ -85,7 +85,7 @@ class ScrlSync
 
   textChanged: ->
     # Create a map of the corresponding lines for each pane... If we want to try to follow the insertions
-    if not @simpleScroll
+    if not @simpleScroll and @tracking
 
       # Get the differences
       diffs = dmp.diff_main paneInfo[0].buffer.getText(), paneInfo[1].buffer.getText()
@@ -164,8 +164,9 @@ class ScrlSync
     # Hide the statusbar element
     @statusBarEle.style.display = 'none'
 
-    # Update our internal variable
+    # Reset our internal variables
     @tracking = no
+    @simpleScroll = false
 
     # Clear the triggers
     disposables.dispose()
