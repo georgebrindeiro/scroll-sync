@@ -75,7 +75,7 @@ class ScrlSync
       disposables.add buffer.onDidStopChanging => @textChanged()
 
       # And, of course, follow the scrolling !
-      disposables.add editor.onDidChangeScrollTop => @scrollPosChanged i
+      disposables.add editorEle.onDidChangeScrollTop => @scrollPosChanged i
 
     # Initialise the correlation map, and do not try to follow insertions if the files are too much different
     @simpleScroll = @textChanged()
