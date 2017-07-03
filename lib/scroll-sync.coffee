@@ -24,8 +24,8 @@ class ScrlSync
     @statusBarEle.classList.add 'inline-block'
     @statusBarEle.classList.add 'text-highlight'
     @statusBarEle.setAttribute 'href', '#'
-    @statusBarEle.textContent = 'ScrlSync'
-    @statusBarEle.style.display = if @tracking then 'inline-block' else 'none'
+    @statusBarEle.textContent = 'ScrlSync:Off'
+    @statusBarEle.style.display = 'inline-block'
     @statusBarEle.addEventListener 'click', => @stopTracking()
     @statusBarTile = statusBar.addLeftTile item: @statusBarEle, priority: 100
 
@@ -33,8 +33,8 @@ class ScrlSync
     # Update our internal variable
     @tracking = yes
 
-    # Display the statusbar's element
-    @statusBarEle.style.display = 'inline-block'
+    # Update statusbar
+    @statusBarEle.textContent = 'ScrlSync:On'
 
     # Get data about the different opened panes
     panes = atom.workspace.getPanes()
@@ -161,8 +161,8 @@ class ScrlSync
     # Reset the information about the panes
     paneInfo = [null, null]
 
-    # Hide the statusbar element
-    @statusBarEle.style.display = 'none'
+    # Update statusbar
+    @statusBarEle.textContent = 'ScrlSync:Off'
 
     # Reset our internal variables
     @tracking = no
