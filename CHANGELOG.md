@@ -1,3 +1,7 @@
+### 0.2.3 - 7/3/17
+- ugly fix to panes.length bug (issue #26)
+- status bar toggles on/off text instead of hiding
+
 ### 0.2.2 - 7/3/17
 - georgebrindeiro took over as package maintainer
 - added several bugfixes by mark-hahn, TPXP and kinetoskombi that were not previously released
