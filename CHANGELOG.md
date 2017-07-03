@@ -1,3 +1,7 @@
+### 0.2.2 - 7/3/17
+- georgebrindeiro took over as package maintainer
+- added several bugfixes by mark-hahn, TPXP and kinetoskombi that were not previously released
+
 ### 0.1.5 - 2/7/16
   PR #14 by lazlojuly (thanks)
 - creating referenceable statusbar element in activate method

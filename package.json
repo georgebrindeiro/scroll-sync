@@ -1,7 +1,7 @@
 {
   "name": "scroll-sync",
   "main": "./lib/scroll-sync",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Synchronize scrolling of two editor panes by content.",
   "consumedServices": {
     "status-bar": {
@@ -13,7 +13,13 @@
   "activationCommands": {
     "atom-text-editor": ["scroll-sync:toggle"]
   },
-  "repository": "https://github.com/mark-hahn/scroll-sync",
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/georgebrindeiro/scroll-sync"
+  },
+  "bugs": {
+    "url": "https://github.com/georgebrindeiro/scroll-sync/issues"
+  },
   "license": "MIT",
   "engines": {
     "atom": ">0.170.0"
@@ -22,4 +28,26 @@
     "diff_match_patch": "0.1.x",
     "status-bar": "^2.0.3"
   }
+  author: {
+    "name" : "Mark Hahn",
+    "url" : "https://github.com/mark-hahn"
+  }
+  contributors: [
+    {
+      "name" : "George Brindeiro",
+      "url" : "https://github.com/georgebrindeiro"
+    },
+    {
+      "name" : "Thomas P.",
+      "url" : "https://github.com/TPXP"
+    },
+    {
+      "name" : "Filipe Augusto Miranda",
+      "url" : "https://github.com/kinetoskombi"
+    },
+    {
+      "name" : "laslojuly",
+      "url" : "https://github.com/lazlojuly"
+    },
+  ]
 }
