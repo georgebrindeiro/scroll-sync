@@ -42,7 +42,7 @@ class ScrlSync
     # We will attempt to guess the ID of the pane in use, to scroll the correct file
     activePane = 0
 
-    if panes.length != 2 then alert "Please open exactly 2 panes"; @stopTracking(); return
+    if panes.length != 5 then alert "Please open exactly 2 panes ("+(panes.length-3)+" panes open)"; @stopTracking(); return
 
     for i in [0..1] then do (i) =>
       pane = panes[i]
