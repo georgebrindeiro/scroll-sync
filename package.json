@@ -13,26 +13,11 @@
   "activationCommands": {
     "atom-text-editor": ["scroll-sync:toggle"]
   },
-  "repository": {
-      "type": "git",
-      "url": "https://github.com/georgebrindeiro/scroll-sync"
-  },
-  "bugs": {
-    "url": "https://github.com/georgebrindeiro/scroll-sync/issues"
-  },
-  "license": "MIT",
-  "engines": {
-    "atom": ">0.170.0"
-  },
-  "dependencies": {
-    "diff_match_patch": "0.1.x",
-    "status-bar": "^2.0.3"
-  }
-  author: {
+  "author": {
     "name" : "Mark Hahn",
     "url" : "https://github.com/mark-hahn"
-  }
-  contributors: [
+  },
+  "contributors": [
     {
       "name" : "George Brindeiro",
       "url" : "https://github.com/georgebrindeiro"
@@ -50,4 +35,19 @@
       "url" : "https://github.com/lazlojuly"
     },
   ]
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/georgebrindeiro/scroll-sync"
+  },
+  "bugs": {
+    "url": "https://github.com/georgebrindeiro/scroll-sync/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.170.0"
+  },
+  "dependencies": {
+    "diff_match_patch": "0.1.x",
+    "status-bar": "^2.0.3"
+  }
 }
