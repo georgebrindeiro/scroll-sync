@@ -12,15 +12,15 @@ class ScrlSync
 
   activate: (state) ->
     @tracking = no
-    @paneDisposables = new CompositeDisposable
+    @disposables = new CompositeDisposable
 
-    atom.commands.add 'atom-workspace', 'scroll-sync:toggle': =>
+    @disposables.add atom.commands.add 'atom-workspace', 'scroll-sync:toggle': =>
       @toggleTracking()
 
-    @paneDisposables.add atom.workspace.getCenter().onDidAddPane =>
+    @disposables.add atom.workspace.getCenter().onDidAddPane =>
       @checkPaneCount()
 
-    @paneDisposables.add atom.workspace.getCenter().onDidDestroyPane =>
+    @disposables.add atom.workspace.getCenter().onDidDestroyPane =>
       @checkPaneCount()
 
     @checkPaneCount()
@@ -67,7 +67,7 @@ class ScrlSync
       @stopTracking()
       return
 
-    @disposables = new CompositeDisposable
+    @trackingDisposables = new CompositeDisposable
     @paneInfo = []
 
     @addPaneInfo pane for pane in panes
@@ -104,13 +104,13 @@ class ScrlSync
     ## Set the triggers
 
     # Stop tracking if the pane is closed
-    @disposables.add pane.onWillDestroy => @stopTracking()
+    @trackingDisposables.add pane.onWillDestroy => @stopTracking()
 
     # Keep tracking the changes
-    @disposables.add buffer.onDidStopChanging => @textChanged()
+    @trackingDisposables.add buffer.onDidStopChanging => @textChanged()
 
     # And, of course, follow the scrolling !
-    @disposables.add editorEle.onDidChangeScrollTop => @scrollPosChanged i
+    @trackingDisposables.add editorEle.onDidChangeScrollTop => @scrollPosChanged i
 
 
   textChanged: ->
@@ -202,8 +202,8 @@ class ScrlSync
     @simpleScroll = false
 
     # Clear the triggers
-    @disposables.dispose()
-    @disposables.clear()
+    @trackingDisposables.dispose()
+    @trackingDisposables.clear()
 
   deactivate: ->
     # Stop the scroll triggers
@@ -216,7 +216,7 @@ class ScrlSync
     @statusBarTile = null
     @statusBarEle = null
 
-    @paneDisposables.dispose()
-    @paneDisposables.clear()
+    @disposables.dispose()
+    @disposables.clear()
 
 module.exports = new ScrlSync
