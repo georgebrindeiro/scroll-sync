@@ -1,4 +1,4 @@
-
+# coffeelint: disable=max_line_length
 {CompositeDisposable} = require 'atom'
 dmpmod  = require 'diff_match_patch'
 dmp     = new dmpmod.diff_match_patch()
@@ -7,75 +7,70 @@ DIFF_EQUAL  =  0
 DIFF_INSERT =  1
 DIFF_DELETE = -1
 
-paneInfo = [null, null]
-
-# This needs to get global, otherwise the events still get triggered
-disposables = new CompositeDisposable
 
 class ScrlSync
 
   activate: (state) ->
     @tracking = no
-    @statusBarEle = document.createElement 'a'
+    @paneDisposables = new CompositeDisposable
+
     atom.commands.add 'atom-workspace', 'scroll-sync:toggle': =>
-      if not @tracking then @startTracking() else @stopTracking()
+      @toggleTracking()
+
+    @paneDisposables.add atom.workspace.getCenter().onDidAddPane =>
+      @checkPaneCount()
+
+    @paneDisposables.add atom.workspace.getCenter().onDidDestroyPane =>
+      @checkPaneCount()
+
+    @checkPaneCount()
+
 
   consumeStatusBar: (statusBar) ->
+    @statusBarEle = document.createElement 'div'
     @statusBarEle.classList.add 'inline-block'
-    @statusBarEle.classList.add 'text-highlight'
-    @statusBarEle.setAttribute 'href', '#'
-    @statusBarEle.textContent = 'ScrlSync:Off'
-    @statusBarEle.style.display = 'inline-block'
-    @statusBarEle.addEventListener 'click', => @stopTracking()
+    @statusBarEle.classList.add 'scroll-sync-status-bar'
+    @statusBarTooltip?.dispose()
+    @statusBarTooltip = atom.tooltips.add @statusBarEle, title: 'Scroll Sync: Off'
+    @statusBarEle.addEventListener 'click', => @toggleTracking()
+    @checkPaneCount()
     @statusBarTile = statusBar.addLeftTile item: @statusBarEle, priority: 100
+
+  checkPaneCount: ->
+    paneCount = atom.workspace.getCenter().getPanes().length
+    @statusBarEle?.classList.toggle 'two-panes', paneCount is 2
+
+  toggleTracking: ->
+    if @tracking
+      @stopTracking()
+    else
+      @startTracking()
 
   startTracking: ->
     # Update our internal variable
     @tracking = yes
 
     # Update statusbar
-    @statusBarEle.textContent = 'ScrlSync:On'
+    if @statusBarEle?
+      @statusBarEle.classList.add 'scroll-sync-on'
+      @statusBarTooltip?.dispose()
+      @statusBarTooltip = atom.tooltips.add @statusBarEle, title: 'Scroll Sync: On'
 
     # Get data about the different opened panes
-    panes = atom.workspace.getPanes()
+    panes = atom.workspace.getCenter().getPanes()
 
     # We will attempt to guess the ID of the pane in use, to scroll the correct file
     activePane = 0
 
-    if panes.length != 5 then alert "Please open exactly 2 panes ("+(panes.length-3)+" panes open)"; @stopTracking(); return
+    if panes.length != 2
+      atom.notifications.addError "Please open exactly 2 panes", detail: "#{panes.length} panes open", dissmissable: true
+      @stopTracking()
+      return
 
-    for i in [0..1] then do (i) =>
-      pane = panes[i]
+    @disposables = new CompositeDisposable
+    @paneInfo = []
 
-      # If this is the pane in use, note it !
-      if pane == atom.workspace.getActivePane()
-        activePane = i
-
-      # Initialize our data structure
-      editor = pane.getActiveEditor()
-      editorEle = atom.views.getView editor
-
-      buffer = editor.getBuffer()
-
-      # If something went wrong, cancel everything
-      if not editor or not buffer then @stopTracking(); return
-
-      paneInfo[i] = {
-        editorEle, buffer
-      }
-
-      @lineHeight = editor.getLineHeightInPixels()
-
-      ## Set the triggers
-
-      # Stop tracking if the pane is closed
-      disposables.add pane.onWillDestroy => @stopTracking()
-
-      # Keep tracking the changes
-      disposables.add buffer.onDidStopChanging => @textChanged()
-
-      # And, of course, follow the scrolling !
-      disposables.add editorEle.onDidChangeScrollTop => @scrollPosChanged i
+    @addPaneInfo pane for pane in panes
 
     # Initialise the correlation map, and do not try to follow insertions if the files are too much different
     @simpleScroll = @textChanged()
@@ -83,12 +78,47 @@ class ScrlSync
     # Scroll the other pane to follow the active one
     @scrollPosChanged activePane
 
+  addPaneInfo: (pane) ->
+
+    i = @paneInfo.length
+
+    # If this is the pane in use, note it !
+    if pane == atom.workspace.getActivePane()
+      activePane = i
+
+    # Initialize our data structure
+    editor = pane.getActiveEditor()
+    editorEle = atom.views.getView editor
+
+    buffer = editor.getBuffer()
+
+    # If something went wrong, cancel everything
+    if not editor or not buffer
+      @stopTracking()
+      return
+
+    @paneInfo.push {editorEle, buffer}
+
+    @lineHeight = editor.getLineHeightInPixels()
+
+    ## Set the triggers
+
+    # Stop tracking if the pane is closed
+    @disposables.add pane.onWillDestroy => @stopTracking()
+
+    # Keep tracking the changes
+    @disposables.add buffer.onDidStopChanging => @textChanged()
+
+    # And, of course, follow the scrolling !
+    @disposables.add editorEle.onDidChangeScrollTop => @scrollPosChanged i
+
+
   textChanged: ->
     # Create a map of the corresponding lines for each pane... If we want to try to follow the insertions
     if not @simpleScroll and @tracking
 
       # Get the differences
-      diffs = dmp.diff_main paneInfo[0].buffer.getText(), paneInfo[1].buffer.getText()
+      diffs = dmp.diff_main @paneInfo[0].buffer.getText(), @paneInfo[1].buffer.getText()
       dmp.diff_cleanupSemantic diffs
 
       # Initialise the structures
@@ -118,14 +148,14 @@ class ScrlSync
       if n_equal < n_total / 5 then return true
 
       # Save our work, we don't want to do it again !
-      paneInfo[0].mapToOther = map0by1
-      paneInfo[1].mapToOther = map1by0
+      @paneInfo[0].mapToOther = map0by1
+      @paneInfo[1].mapToOther = map1by0
     return false
 
   scrollPosChanged: (pane) ->
     # Get the data about the panes
-    thisInfo  = paneInfo[pane]
-    otherInfo = paneInfo[1-pane]
+    thisInfo  = @paneInfo[pane]
+    otherInfo = @paneInfo[1-pane]
 
     # If something went wrong, or if we scroll to follow the other panee, don't go further
     if not @tracking or not thisInfo or not otherInfo or thisInfo.scrolling then return
@@ -159,25 +189,34 @@ class ScrlSync
 
   stopTracking: ->
     # Reset the information about the panes
-    paneInfo = [null, null]
+    @paneInfo = null
 
     # Update statusbar
-    @statusBarEle.textContent = 'ScrlSync:Off'
+    if @statusBarEle?
+      @statusBarEle.classList.remove 'scroll-sync-on'
+      @statusBarTooltip?.dispose()
+      @statusBarTooltip = atom.tooltips.add @statusBarEle, title: 'Scroll Sync: Off'
 
     # Reset our internal variables
     @tracking = no
     @simpleScroll = false
 
     # Clear the triggers
-    disposables.dispose()
-    disposables.clear()
+    @disposables.dispose()
+    @disposables.clear()
 
   deactivate: ->
     # Stop the scroll triggers
     @stopTracking()
 
     # Remove our item in the status bar
+    @statusBarTooltip?.dispose()
+    @statusBarTooltip = null
     @statusBarTile?.destroy()
     @statusBarTile = null
+    @statusBarEle = null
+
+    @paneDisposables.dispose()
+    @paneDisposables.clear()
 
 module.exports = new ScrlSync
