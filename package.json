@@ -10,11 +10,6 @@
       }
     }
   },
-  "activationCommands": {
-    "atom-text-editor": [
-      "scroll-sync:toggle"
-    ]
-  },
   "author": {
     "name": "Mark Hahn",
     "url": "https://github.com/mark-hahn"
