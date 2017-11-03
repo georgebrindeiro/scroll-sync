@@ -207,7 +207,7 @@ class ScrlSync
 
   deactivate: ->
     # Stop the scroll triggers
-    @stopTracking()
+    @stopTracking() if @tracking
 
     # Remove our item in the status bar
     @statusBarTooltip?.dispose()
