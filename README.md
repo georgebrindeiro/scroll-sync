@@ -9,14 +9,16 @@ See project at [GitHub](https://github.com/georgebrindeiro/scroll-sync).
 
 (If the image above is not animated then click on it).
 
-# Usage:
+# Usage
 - Open two files in separate panes so they are both visible.
-- Press `Ctrl-Alt-S` (`scroll-sync:toggle`) and the word `ScrlSync:On` will appear in the status bar to indicate that scrolling is synced.
+- A new icon (Up Down Double Arrow) will appear in the status bar.
+- If the icon isn't filled, that means scroll-sync is off: ⇕
+- If the icon is filled, that means scroll-sync is on: ⬍
+- Clicking the icon toggles scroll-sync on/off.
+- The keyboard shortcut `Ctrl-Alt-S` *also* toggles scroll-sync on/off.
 - Scroll either editor pane and the other editor pane will scroll to match.
 - When sections of the files don't match, the editor pane you are directly controlling will scroll through the entire file as normal.  The other pane will stop or jump ahead as needed to keep the content aligned.
 - You may switch between the files to change which is the "master" and which is the "slave".
-- To stop syncing, click on `ScrlSync:On` in the status bar, close one of the tabs or press `Ctrl-Alt-S` again and the status will change to `ScrlSync:Off`.
 
-#License
-
+# License
 Copyright Mark Hahn by MIT license.
