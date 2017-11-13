@@ -1,7 +1,7 @@
 {
   "name": "scroll-sync",
   "main": "./lib/scroll-sync",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Synchronize scrolling of two editor panes by content.",
   "consumedServices": {
     "status-bar": {
@@ -30,6 +30,10 @@
     {
       "name": "laslojuly",
       "url": "https://github.com/lazlojuly"
+    },
+    {
+      "name": "Tony Brix",
+      "url": "https://github.com/UziTech"
     }
   ],
   "repository": {
