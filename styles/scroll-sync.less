@@ -1,0 +1,23 @@
+@import "ui-variables";
+
+.scroll-sync-status-bar {
+	display: none;
+
+	&::before {
+		content: "⇕";
+	}
+
+	&.two-panes {
+		display: inline-block;
+	}
+
+	&.scroll-sync-on {
+		display: inline-block;
+		color: @text-color-success;
+
+		&::before {
+			font-weight: bold;
+			content: "⬍";
+		}
+	}
+}

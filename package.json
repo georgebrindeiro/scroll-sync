@@ -10,34 +10,31 @@
       }
     }
   },
-  "activationCommands": {
-    "atom-text-editor": ["scroll-sync:toggle"]
-  },
   "author": {
-    "name" : "Mark Hahn",
-    "url" : "https://github.com/mark-hahn"
+    "name": "Mark Hahn",
+    "url": "https://github.com/mark-hahn"
   },
   "contributors": [
     {
-      "name" : "George Brindeiro",
-      "url" : "https://github.com/georgebrindeiro"
+      "name": "George Brindeiro",
+      "url": "https://github.com/georgebrindeiro"
     },
     {
-      "name" : "Thomas P.",
-      "url" : "https://github.com/TPXP"
+      "name": "Thomas P.",
+      "url": "https://github.com/TPXP"
     },
     {
-      "name" : "Filipe Augusto Miranda",
-      "url" : "https://github.com/kinetoskombi"
+      "name": "Filipe Augusto Miranda",
+      "url": "https://github.com/kinetoskombi"
     },
     {
-      "name" : "laslojuly",
-      "url" : "https://github.com/lazlojuly"
+      "name": "laslojuly",
+      "url": "https://github.com/lazlojuly"
     }
   ],
   "repository": {
-      "type": "git",
-      "url": "https://github.com/georgebrindeiro/scroll-sync"
+    "type": "git",
+    "url": "https://github.com/georgebrindeiro/scroll-sync"
   },
   "bugs": {
     "url": "https://github.com/georgebrindeiro/scroll-sync/issues"
@@ -47,7 +44,6 @@
     "atom": ">0.170.0"
   },
   "dependencies": {
-    "diff_match_patch": "0.1.x",
-    "status-bar": "^2.0.3"
+    "diff_match_patch": "0.1.x"
   }
 }
