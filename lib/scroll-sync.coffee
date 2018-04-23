@@ -166,7 +166,7 @@ class ScrlSync
     ## ... but, if needed, we determine the number of lines to add/remove to get the panes synced !
     if not @simpleScroll
       # Find the First line from first row in current pane
-      thisRow = thisInfo.editorEle.getFirstVisibleScreenRow()
+      thisRow = thisInfo.editorEle.getFirstVisibleScreenRow()+1
 
       thisLine = thisInfo.editor.bufferPositionForScreenPosition([thisRow, 0]).row
 
@@ -174,7 +174,7 @@ class ScrlSync
       otherRow = otherInfo.editor.screenPositionForBufferPosition([thisLine, 0]).row
 
       # calculate position
-      pos = otherRow * @lineHeight
+      pos = otherRow * @lineHeight - @lineHeight
 
     # console.log('thisRow', thisRow)
     # console.log('thisLine', thisLine)
