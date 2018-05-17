@@ -1,17 +1,27 @@
 # coffeelint: disable=max_line_length
 {CompositeDisposable} = require 'atom'
-# dmpmod  = require 'diff_match_patch'
-# dmp     = new dmpmod.diff_match_patch()
-#
-# DIFF_EQUAL  =  0
-# DIFF_INSERT =  1
-# DIFF_DELETE = -1
+dmpmod  = require 'diff_match_patch'
+dmp     = new dmpmod.diff_match_patch()
+
+DIFF_EQUAL  =  0
+DIFF_INSERT =  1
+DIFF_DELETE = -1
 
 
 class ScrlSync
 
+  config: {
+  "linemode": {
+    "title": "Scroll by line number",
+    "description": "Matching lines by number instead of by content (if you are working on files with non recognisable matching content, such as translations). You must restart Atom to make change take effect.",
+    "type": "boolean",
+    "default": false
+    }
+  }
+
   activate: (state) ->
     @tracking = no
+    @linemode = atom.config.get('scroll-sync.linemode')
     @disposables = new CompositeDisposable
 
     @disposables.add atom.commands.add 'atom-workspace', 'scroll-sync:toggle': =>
@@ -115,42 +125,41 @@ class ScrlSync
 
   textChanged: ->
     # Create a map of the corresponding lines for each pane... If we want to try to follow the insertions
-    if not @simpleScroll and @tracking
+    if not @simpleScroll and not @linemode and @tracking
 
       # Get the differences
-      # diffs = dmp.diff_main @paneInfo[0].buffer.getText(), @paneInfo[1].buffer.getText()
-      # dmp.diff_cleanupSemantic diffs
+      diffs = dmp.diff_main @paneInfo[0].buffer.getText(), @paneInfo[1].buffer.getText()
+      dmp.diff_cleanupSemantic diffs
 
       # Initialise the structures
       map0by1 = [0]
       map1by0 = [0]
 
       # Count the number of equal lines, to determine the similarity of the files
-      # n_equal = 0
-      # n_total = 0
-      #
-      # for diff in diffs
-      #   [diffType, diffStr] = diff
-      #   lineCount = diffStr.match(/\n/g)?.length ? 0
-      #   for i in [0...lineCount]
-      #     # Store the length of the modified array, otherwise we have trouble for equal lines as the two arrays get modified
-      #     tmp = map1by0.length
-      #
-      #     # For each line, we set the corresponding one on the other pane
-      #     if diffType in [DIFF_EQUAL, DIFF_INSERT] then map1by0.push map0by1.length
-      #     if diffType in [DIFF_EQUAL, DIFF_DELETE] then map0by1.push tmp
-      #
-      #   # And we count the number of equal lines
-      #   if diffType == DIFF_EQUAL then n_equal += lineCount
-      #   n_total += lineCount
-      #
-      # # Make sure that the files are not too much different (at least 20% common lines)
-      # if n_equal < n_total / 5 then return true
+      n_equal = 0
+      n_total = 0
+
+      for diff in diffs
+        [diffType, diffStr] = diff
+        lineCount = diffStr.match(/\n/g)?.length ? 0
+        for i in [0...lineCount]
+          # Store the length of the modified array, otherwise we have trouble for equal lines as the two arrays get modified
+          tmp = map1by0.length
+
+          # For each line, we set the corresponding one on the other pane
+          if diffType in [DIFF_EQUAL, DIFF_INSERT] then map1by0.push map0by1.length
+          if diffType in [DIFF_EQUAL, DIFF_DELETE] then map0by1.push tmp
+
+        # And we count the number of equal lines
+        if diffType == DIFF_EQUAL then n_equal += lineCount
+        n_total += lineCount
+
+      # Make sure that the files are not too much different (at least 20% common lines)
+      if n_equal < n_total / 5 then return true
 
       # Save our work, we don't want to do it again !
       @paneInfo[0].mapToOther = map0by1
       @paneInfo[1].mapToOther = map1by0
-
     return false
 
   scrollPosChanged: (pane) ->
@@ -161,40 +170,54 @@ class ScrlSync
     # If something went wrong, or if we scroll to follow the other panee, don't go further
     if not @tracking or not thisInfo or not otherInfo or thisInfo.scrolling then return
 
-    # console.log('thisStoredLine', thisInfo.thisStoredLine)
+    if not @linemode
 
-    # Future scroll top position of the other pane, for the moment it is the same as on our pane...
-    pos = thisInfo.editorEle.getScrollTop()
+        # Future scroll top position of the other pane, for the moment it is the same as on our pane...
+        pos = thisInfo.editorEle.getScrollTop()
 
-    ## Find the line number of the second row in current pane
-    thisRow = thisInfo.editorEle.getFirstVisibleScreenRow() + 1
-    thisLine = thisInfo.editor.bufferPositionForScreenPosition([thisRow, 0]).row
+        ## ... but, if needed, we determine the number of lines to add/remove to get the panes synced !
+        if not @simpleScroll
+          # Find the line at a third of the screen - looked more logical to me
+          thisLine = thisInfo.editorEle.getFirstVisibleScreenRow() * 2 + thisInfo.editorEle.getLastVisibleScreenRow()
+          thisLine = Math.round thisLine / 3
 
-    # ## if one prefers the row at the third of the screen in current pane
-    # thisRange = thisInfo.editorEle.getVisibleRowRange()
-    # thisFirstRow = thisRange[0]
-    # thisLastRow = thisRange[1]
-    # shiftOfnRows = Math.round((thisLastRow - thisFirstRow)/3)
-    # thisRow = thisFirstRow + shiftOfnRows
+          # Find the corresponding line in the other pane
+          otherLine = thisInfo.mapToOther[thisLine]
 
-    ## Check if the line has changed
-    thisLineHasChanged = (thisLine == thisInfo.thisStoredLine)
+          # Add the difference in pixels
+          pos += (otherLine - thisLine) * @lineHeight
 
-    if thisLineHasChanged
-    then return
+    else
 
-    if not @simpleScroll
+        # Future scroll top position of the other pane, for the moment it is the same as on our pane...
+        pos = thisInfo.editorEle.getScrollTop()
 
-      ## Find the corresponding row in the other pane…
-      # otherFirstRow = otherInfo.editor.screenPositionForBufferPosition([thisFirstLine, 0]).row
-      otherRow = otherInfo.editor.screenPositionForBufferPosition([thisLine, 0]).row
-      otherLine = otherInfo.editor.bufferPositionForScreenPosition([otherRow, 0]).row
+        ## Find the line number of the second row in current pane
+        thisRow = thisInfo.editorEle.getFirstVisibleScreenRow() + 1
+        thisLine = thisInfo.editor.bufferPositionForScreenPosition([thisRow, 0]).row
 
-      # … and calculate its position (with adjustment for ease of reading)
-      pos = ((otherRow - 1) * @lineHeight) + (0.3 * @lineHeight)
+        # ## if one prefers the row at the third of the screen in current pane
+        # thisRange = thisInfo.editorEle.getVisibleRowRange()
+        # thisFirstRow = thisRange[0]
+        # thisLastRow = thisRange[1]
+        # shiftOfnRows = Math.round((thisLastRow - thisFirstRow)/3)
+        # thisRow = thisFirstRow + shiftOfnRows
 
-      # # … and calculate its position (third of the screen option)
-      # pos = (otherRow - shiftOfnRows) * @lineHeight
+        ## Check if the line has changed
+        thisLineHasChanged = (thisLine == thisInfo.thisStoredLine)
+
+        if not @simpleScroll and thisLineHasChanged
+
+          ## Find the corresponding row in the other pane…
+          # otherFirstRow = otherInfo.editor.screenPositionForBufferPosition([thisFirstLine, 0]).row
+          otherRow = otherInfo.editor.screenPositionForBufferPosition([thisLine, 0]).row
+          otherLine = otherInfo.editor.bufferPositionForScreenPosition([otherRow, 0]).row
+
+          # … and calculate its position (with adjustment for ease of reading)
+          pos = ((otherRow - 1) * @lineHeight) + (0.3 * @lineHeight)
+
+          # # … and calculate its position (third of the screen option)
+          # pos = (otherRow - shiftOfnRows) * @lineHeight
 
     # Make sure the scrolling won't trigger the function to avoid an infinite loop
     otherInfo.scrolling = yes
