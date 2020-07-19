@@ -10,8 +10,18 @@ DIFF_DELETE = -1
 
 class ScrlSync
 
+  config: {
+  "linemode": {
+    "title": "Scroll by line number",
+    "description": "Matching lines by number instead of by content (if you are working on files with non recognisable matching content, such as translations). You must restart Atom to make change take effect.",
+    "type": "boolean",
+    "default": false
+    }
+  }
+
   activate: (state) ->
     @tracking = no
+    @linemode = atom.config.get('scroll-sync.linemode')
     @disposables = new CompositeDisposable
 
     @disposables.add atom.commands.add 'atom-workspace', 'scroll-sync:toggle': =>
@@ -97,7 +107,7 @@ class ScrlSync
       @stopTracking()
       return
 
-    @paneInfo.push {editorEle, buffer}
+    @paneInfo.push {editorEle, buffer, editor}
 
     @lineHeight = editor.getLineHeightInPixels()
 
@@ -115,7 +125,7 @@ class ScrlSync
 
   textChanged: ->
     # Create a map of the corresponding lines for each pane... If we want to try to follow the insertions
-    if not @simpleScroll and @tracking
+    if not @simpleScroll and not @linemode and @tracking
 
       # Get the differences
       diffs = dmp.diff_main @paneInfo[0].buffer.getText(), @paneInfo[1].buffer.getText()
@@ -160,32 +170,67 @@ class ScrlSync
     # If something went wrong, or if we scroll to follow the other panee, don't go further
     if not @tracking or not thisInfo or not otherInfo or thisInfo.scrolling then return
 
-    # Future scroll top position of the other pane, for the moment it is the same as on our pane...
-    pos = thisInfo.editorEle.getScrollTop()
+    if not @linemode
 
-    ## ... but, if needed, we determine the number of lines to add/remove to get the panes synced !
-    if not @simpleScroll
-      # Find the line at a third of the screen - looked more logical to me
-      thisLine = thisInfo.editorEle.getFirstVisibleScreenRow() * 2 + thisInfo.editorEle.getLastVisibleScreenRow()
-      thisLine = Math.round thisLine / 3
+        # Future scroll top position of the other pane, for the moment it is the same as on our pane...
+        pos = thisInfo.editorEle.getScrollTop()
 
-      # Find the corresponding line in the other pane
-      otherLine = thisInfo.mapToOther[thisLine]
+        ## ... but, if needed, we determine the number of lines to add/remove to get the panes synced !
+        if not @simpleScroll
+          # Find the line at a third of the screen - looked more logical to me
+          thisLine = thisInfo.editorEle.getFirstVisibleScreenRow() * 2 + thisInfo.editorEle.getLastVisibleScreenRow()
+          thisLine = Math.round thisLine / 3
 
-      # Add the difference in pixels
-      pos += (otherLine - thisLine) * @lineHeight
+          # Find the corresponding line in the other pane
+          otherLine = thisInfo.mapToOther[thisLine]
+
+          # Add the difference in pixels
+          pos += (otherLine - thisLine) * @lineHeight
+
+    else
+
+        # Future scroll top position of the other pane, for the moment it is the same as on our pane...
+        pos = thisInfo.editorEle.getScrollTop()
+
+        ## Find the line number of the second row in current pane
+        thisRow = thisInfo.editorEle.getFirstVisibleScreenRow() + 1
+        thisLine = thisInfo.editor.bufferPositionForScreenPosition([thisRow, 0]).row
+
+        # ## if one prefers the row at the third of the screen in current pane
+        # thisRange = thisInfo.editorEle.getVisibleRowRange()
+        # thisFirstRow = thisRange[0]
+        # thisLastRow = thisRange[1]
+        # shiftOfnRows = Math.round((thisLastRow - thisFirstRow)/3)
+        # thisRow = thisFirstRow + shiftOfnRows
+
+        ## Check if the line has changed
+        thisLineHasChanged = (thisLine == thisInfo.thisStoredLine)
+
+        if not @simpleScroll and thisLineHasChanged
+
+          ## Find the corresponding row in the other pane…
+          # otherFirstRow = otherInfo.editor.screenPositionForBufferPosition([thisFirstLine, 0]).row
+          otherRow = otherInfo.editor.screenPositionForBufferPosition([thisLine, 0]).row
+          otherLine = otherInfo.editor.bufferPositionForScreenPosition([otherRow, 0]).row
+
+          # … and calculate its position (with adjustment for ease of reading)
+          pos = ((otherRow - 1) * @lineHeight) + (0.3 * @lineHeight)
+
+          # # … and calculate its position (third of the screen option)
+          # pos = (otherRow - shiftOfnRows) * @lineHeight
 
     # Make sure the scrolling won't trigger the function to avoid an infinite loop
     otherInfo.scrolling = yes
 
     # Scroll the other pane
-    otherInfo.editorEle.setScrollTop pos
+    otherInfo.editorEle.setScrollTop(pos)
 
     # We have to wait for the editor to redraw before removing our scrolling flag.
     # Since I haven't found a trigger, we'll use that for now
     setTimeout ->
       otherInfo.scrolling = no
     , 10
+    @paneInfo[pane].thisStoredLine = thisLine
 
   stopTracking: ->
     # Reset the information about the panes
